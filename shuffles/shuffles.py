@@ -1,3 +1,4 @@
+import math
 import random
 
 from .decks import Deck
@@ -43,38 +44,67 @@ def riffle_pass(cards):
     :return: A new list of cards with the riffle pass applied
     :raises ValueError: If the input deck is not a non-empty list
     """
+    return gsm_riffle_shuffle(cards)
+    # if not isinstance(cards, list) or len(cards) == 0:
+    #     raise ValueError("Input deck must be a non-empty list")
+
+    # split_idx = min(len(cards) // 2 + random.randint(0, 3), len(cards))
+    # left_half = cards[:split_idx]
+    # right_half = cards[split_idx:]
+
+    # if random.random() > 0.5:
+    #     # switch right and left halves
+    #     left_half, right_half = right_half, left_half
+
+    # new_cards = []
+    # l_pointer = 0
+    # r_pointer = 0
+    # while l_pointer < len(left_half) and r_pointer < len(right_half):
+    #     # add from left half
+    #     chunk_size = min(random.randint(1, 3), len(left_half) - l_pointer)
+    #     new_cards.extend(left_half[l_pointer : l_pointer + chunk_size])
+    #     l_pointer += chunk_size
+
+    #     # add from right half
+    #     chunk_size = min(random.randint(1, 3), len(right_half) - r_pointer)
+    #     new_cards.extend(right_half[r_pointer : r_pointer + chunk_size])
+    #     r_pointer += chunk_size
+
+    # if l_pointer < len(left_half):
+    #     new_cards.extend(left_half[l_pointer:])
+
+    # if r_pointer < len(right_half):
+    #     new_cards.extend(right_half[r_pointer:])
+
+    # return new_cards
+
+def gsm_riffle_shuffle(cards):
+    """
+    Perform a single GSM-model riffle pass on the given deck.
+
+    :param list cards: A list of cards to be shuffled
+    :return: A new list of cards with the riffle pass applied
+    :raises ValueError: If the input deck is not a non-empty list
+    """
     if not isinstance(cards, list) or len(cards) == 0:
         raise ValueError("Input deck must be a non-empty list")
 
-    split_idx = min(len(cards) // 2 + random.randint(0, 3), len(cards))
-    left_half = cards[:split_idx]
-    right_half = cards[split_idx:]
+    # split deck index ~ N(C/2, C/3), where C is len(cards)
+    C = len(cards)
+    split_idx = math.floor(random.normalvariate(C / 2, C / 3))
+    left_hand, right_hand = cards[:split_idx], cards[split_idx:]
+    left_hand.reverse(), right_hand.reverse()
 
-    if random.random() > 0.5:
-        # switch right and left halves
-        left_half, right_half = right_half, left_half
+    new_deck = []
+    while len(left_hand) > 0 or len(right_hand) > 0:
+        proportion_in_left_hand = ( len(left_hand) / ( len(left_hand) + len(right_hand) ))
+        if random.random() < proportion_in_left_hand:
+            new_deck.append( left_hand.pop() )
+        else:
+            new_deck.append( right_hand.pop() )
+    
+    return new_deck
 
-    new_cards = []
-    l_pointer = 0
-    r_pointer = 0
-    while l_pointer < len(left_half) and r_pointer < len(right_half):
-        # add from left half
-        chunk_size = min(random.randint(1, 3), len(left_half) - l_pointer)
-        new_cards.extend(left_half[l_pointer : l_pointer + chunk_size])
-        l_pointer += chunk_size
-
-        # add from right half
-        chunk_size = min(random.randint(1, 3), len(right_half) - r_pointer)
-        new_cards.extend(right_half[r_pointer : r_pointer + chunk_size])
-        r_pointer += chunk_size
-
-    if l_pointer < len(left_half):
-        new_cards.extend(left_half[l_pointer:])
-
-    if r_pointer < len(right_half):
-        new_cards.extend(right_half[r_pointer:])
-
-    return new_cards
 
 def strip_pass(cards):
     """
@@ -147,7 +177,24 @@ class HomeShuffle(Shuffle):
         for _ in range(3):
             self.deck.cards = riffle_pass(self.deck.cards)
         self.deck.cards = cut_pass(self.deck.cards)
+
+
+class RiffleOnlyShuffle(Shuffle):
+    def __init__(self, num_riffle_passes=1):
+        self.super().__init__()
+        self.num_riffle_passes = num_riffle_passes
+
+    def shuffle(self):
+        """
+        The home shuffle models a casual shuffle, with just riffle passes and a final cut.
+        :param int n_riffle: The number of riffle passes to perform
+        """
+        self.add_back_discards()
+
+        for _ in range(self.num_riffle_passes):
+            self.deck.cards = riffle_pass(self.deck.cards)
         
+
 class CasinoHandShuffle(Shuffle):
     def shuffle(self):
         """

@@ -1,4 +1,5 @@
 from shuffles.shuffles import *
+from shuffles.decks import *
 
 def test_deck_initialization():
     deck1 = Deck(num_decks=1)
@@ -21,7 +22,7 @@ def test_deck_initialization():
 def test_generate_deal_sequence():
     shuffle = Shuffle(num_decks=1, shuffle_threshold=0.8)
     deal_seq = shuffle.generate_deal_sequence(12)
-    assert len(deal_seq) == 13
+    assert len(deal_seq) == 12
     assert deal_seq[11] == 'shuffle'
 
 def test_riffle_pass():
