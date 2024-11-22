@@ -180,8 +180,8 @@ class HomeShuffle(Shuffle):
 
 
 class RiffleOnlyShuffle(Shuffle):
-    def __init__(self, num_riffle_passes=1):
-        self.super().__init__()
+    def __init__(self, num_riffle_passes=1, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.num_riffle_passes = num_riffle_passes
 
     def shuffle(self):
